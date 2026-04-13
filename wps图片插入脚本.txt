@@ -1,0 +1,80 @@
+Sub InsertPicturesWPS()
+    ' 参数设置
+    Const TARGET_COL As String = "A"
+    Const START_ROW As Long = 2
+    Const MAX_IMAGE_HEIGHT As Long = 80
+    Const PADDING_PERCENT As Double = 0.05
+    
+    ' WPS兼容声明
+    Dim selectedFiles As Variant
+    Dim pic As Object ' 使用通用对象声明
+    Dim i As Long
+    Dim cell As Range
+    Dim aspectRatio As Double
+    
+    ' 创建文件选择对话框 (WPS兼容方式)
+    selectedFiles = Application.GetOpenFilename( _
+        FileFilter:="图片文件 (*.jpg;*.jpeg;*.png;*.bmp;*.gif), *.jpg;*.jpeg;*.png;*.bmp;*.gif", _
+        MultiSelect:=True, _
+        Title:="选择多张图片（按住Ctrl多选）")
+    
+    ' 检查是否选择了文件
+    If TypeName(selectedFiles) = "Boolean" Then
+        MsgBox "操作已取消", vbInformation
+        Exit Sub
+    End If
+    
+    Application.ScreenUpdating = False
+    
+    ' 设置目标列宽
+    Columns(TARGET_COL).ColumnWidth = 30
+    
+    ' 循环插入每张图片
+    For i = LBound(selectedFiles) To UBound(selectedFiles)
+        Set cell = Cells(START_ROW + i - 1, TARGET_COL)
+        
+        ' WPS兼容的图片插入方法
+        Set pic = ActiveSheet.Shapes.AddPicture( _
+            Filename:=selectedFiles(i), _
+            LinkToFile:=msoFalse, _
+            SaveWithDocument:=msoTrue, _
+            Left:=cell.Left, _
+            Top:=cell.Top, _
+            Width:=-1, _
+            Height:=-1)
+        
+        ' 获取原始宽高比
+        aspectRatio = pic.Width / pic.Height
+        
+        ' 设置图片尺寸
+        With pic
+            .LockAspectRatio = msoTrue
+            
+            ' 计算目标尺寸
+            Dim targetWidth As Double
+            targetWidth = cell.Width * (1 - 2 * PADDING_PERCENT)
+            
+            ' 设置宽度并自动计算高度
+            .Width = targetWidth
+            
+            ' 如果高度超过限制，重新计算
+            If .Height > MAX_IMAGE_HEIGHT Then
+                .Height = MAX_IMAGE_HEIGHT
+                .Width = MAX_IMAGE_HEIGHT * aspectRatio
+            End If
+            
+            ' 居中定位
+            .Left = cell.Left + (cell.Width - .Width) / 2
+            .Top = cell.Top + (cell.Height - .Height) / 2
+            
+            ' 设置图片随单元格移动
+            .Placement = xlMoveAndSize
+        End With
+        
+        ' 自动调整行高
+        cell.RowHeight = pic.Height + 10 ' 添加额外边距
+    Next i
+    
+    Application.ScreenUpdating = True
+    MsgBox "成功插入 " & (UBound(selectedFiles) - LBound(selectedFiles) + 1) & " 张图片", vbInformation
+End Sub
