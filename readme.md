@@ -241,5 +241,3 @@ MODEL\_NAME = 'qwen-vl-plus'             # 可更换为 qwen-vl-max 等其他模
 ## 📄 许可证
 
 本项目基于 [MIT](LICENSE) 许可证开源，详见 LICENSE 文件。
-
-> （注：文档部分内容可能由 AI 生成）
